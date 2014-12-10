@@ -1,0 +1,19 @@
+{
+  "name": "react-skin",
+  "version": "0.0.1",
+  "description": "SkinnableComponent for react",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "react",
+    "react-components",
+    "skin"
+  ],
+  "author": "François de Campredon <francois.de.campredon@gmail.com>",
+  "license": "Apache Version 2",
+  "dependencies": {
+    "react": "^0.12.1"
+  }
+}
