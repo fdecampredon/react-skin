@@ -172,7 +172,7 @@ replaced using the `setDefaultSkin` function.
 
 **Skinnable component** allows to define a contract between component and skin. The `skinParts` properties of the definition passed to `ReactSkin.createClass`
 defines which elements (and their types) the component expect to find in the tree produced by its skin, when the component is rendered the part referenced 
-trough the React `ref` properties will be passed to `partAdded` and the component can inject event listeners, or any kind of props to thoses components.
+trough the React `ref` properties will be passed to `partAdded` and the component can inject event listeners, or any kind of props to thoses components.  
 On the other end the skin part receive the result of the `getSkinState` method, and can render accordingly to this state.
 
 Now if I want to use bootstrap I can just do: 
