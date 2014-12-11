@@ -115,7 +115,7 @@ var ToggleButton = ReactSkin.createClass({
   
   skinParts: {
     button: skinPart('button').isRequired
-  }
+  },
   
   getInitialState: function() {
     return {
