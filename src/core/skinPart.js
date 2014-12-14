@@ -20,7 +20,7 @@ function MultipleError() {
 
 function checkSkinPart(element, type, required, isArray) {
   var errors = [];
-  if (!element) {
+  if (!element || element.length === 0) {
     if (required) {
       errors.push(RequiredError());
     }
@@ -45,7 +45,7 @@ function skinPart(type) {
     return checkSkinPart(element, type, false, false);
   };
   
-  result.required = function (element) {
+  result.isRequired = function (element) {
     return checkSkinPart(element, type, true, false);
   };
   
@@ -57,7 +57,7 @@ skinPart.array = function (type) {
     return checkSkinPart(element, type, false, true);
   };
   
-  result.required = function (element) {
+  result.isRequired = function (element) {
     return checkSkinPart(element, type, true, true);
   };
   
@@ -65,6 +65,6 @@ skinPart.array = function (type) {
 };
 
 
-skinPart.errors = ErrorType;
+skinPart.ErrorType = ErrorType;
 
 module.exports = skinPart;
