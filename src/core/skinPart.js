@@ -5,35 +5,40 @@ var ErrorType = {
   MULTIPLE: 2
 };
 
-function WrongTypeError(expected, actual) {
-  return { type: ErrorType.WRONG_TYPE, expected, actual};
-}
 
-function RequiredError() {
-  return { type: ErrorType.REQUIRED };
-}
-
-function MultipleError() {
-  return { type: ErrorType.MULTIPLE };
+function getType(type) {
+  if (typeof type === 'function' && typeof type.type === 'function' ) {
+    return type.type;
+  }
+  return type;
 }
 
 
-function checkSkinPart(element, type, required, isArray) {
+
+function checkSkinPart(element, type, required, array) {
+  type = getType(type);
   var errors = [];
   if (!element || element.length === 0) {
     if (required) {
-      errors.push(RequiredError());
+      errors.push({ type: ErrorType.REQUIRED });
     }
   } else if (Array.isArray(element)) {
-    if (!isArray) {
-      errors.push(MultipleError());
+    if (!array) {
+      errors.push({ type: ErrorType.MULTIPLE });
     } else {
-      errors = errors.concat(element.map(function (element) {
-        return skinPart(element, type, required, true);
-      }));
+      errors = errors.concat.apply(
+        errors,
+        element
+          .map(element => checkSkinPart(element, type, required, true))
+          .filter(errors => errors.length > 0)
+      );
     }
-  } else if (type !== '*' && element.type !== type && !(element.type instanceof type)) {
-    errors.push(WrongTypeError(type, element.type));
+  } else if (type !== '*' && element.type !== type) {
+    errors.push({ 
+      type: ErrorType.WRONG_TYPE, 
+      expected: type, 
+      actual: element.type
+    });
   }
 
   return errors;
