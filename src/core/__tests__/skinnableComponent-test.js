@@ -1,8 +1,8 @@
 jest.dontMock('../skinPart');
-jest.dontMock('../skinnableComponent');
+jest.dontMock('../SkinnableComponent');
 
 
-var SkinnableComponent = require('../skinnableComponent');
+var SkinnableComponent = require('../SkinnableComponent');
 var React = require('react');
 var ReactTestUtils = require('react/lib/ReactTestUtils');
 var skinPart = require('../skinPart');
