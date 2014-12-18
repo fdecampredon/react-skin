@@ -1,9 +1,11 @@
 jest.dontMock('../skinPart');
 
+
+var skinPart = require('../skinPart');
+var ErrorType = skinPart.ErrorType;
+var React = require('react');
+
 describe('skinPart', function () {
-  var skinPart = require('../skinPart');
-  var ErrorType = skinPart.ErrorType;
-  var React = require('react');
   
   it('should validate dom element skinPart type', function () {
     var part = skinPart('div');

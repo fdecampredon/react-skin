@@ -9,6 +9,8 @@
     "expect": true,
     "pit": true,
     "beforeEach": true,
-    "afterEach": true
+    "afterEach": true,
+    "spyOn": true,
+    "jasmine": true
   }
 }

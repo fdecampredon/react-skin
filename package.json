@@ -18,10 +18,15 @@
   },
   "devDependencies": {
     "jest-cli": "^0.2.1",
+    "object-assign": "^2.0.0",
     "react-tools": "^0.12.1"
   },
   "jest": {
     "scriptPreprocessor": "<rootDir>/jest/preprocessor.js",
-    "unmockedModulePathPatterns": ["<rootDir>/node_modules/react"]
+    "setupEnvScriptFile": "<rootDir>/jest/environment.js",
+    "unmockedModulePathPatterns": [
+      "<rootDir>/node_modules/react",
+      "<rootDir>/node_modules/object-assign"
+    ]
   }
 }

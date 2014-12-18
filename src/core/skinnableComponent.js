@@ -1,16 +1,15 @@
 var React     = require('react');
 var invariant = require('react/lib/invariant');
-var ErrorType = require('./skinPart');
+var ErrorType = require('./skinPart').ErrorType;
 
 
 function traverseTree(element, func) {
   func(element);
-  var children = (element && element && element.props.children) || [];
-  if(!Array.isArray(children)) {
-      children = [children];
-  }
-  return children.forEach(function (el) {
-      return typeof el === 'object' && func(el);
+  var children = (element && element.props && element.props.children);
+  React.Children.forEach(children, function (el) {
+    if (el && typeof el === 'object') {
+      traverseTree(el, func);
+    }
   });
 }
 
@@ -24,65 +23,75 @@ function getDisplayName(comp) {
 
 function typeToString(type) {
   return typeof type === 'function'?
-    getDisplayName(type):
+    type.displayName:
     type;
+}
+
+function getSkinRef(element) {
+  return element.props? element.props.skinRef : null; 
+}
+
+function deleteSkinRef(element) {
+  delete element.props.skinRef;
+  if (element._store) {
+    delete element._store.skinRef;
+  }
 }
 
 function attachSkinPart(component, tree) {
   var skinParts = component.constructor.skinParts;
   
-  if (!skinParts && !Object.keys(skinParts).length) {
+  if (!skinParts || !Object.keys(skinParts).length) {
     return tree;
   } 
   
   var skinPartsElements = {};
   
   traverseTree(tree, function (element) {
-    if (element.ref && skinParts[element.ref]) {
-      if (skinPartsElements.hasOwnProperty(element.ref)) {
-        if (!Array.isArray(skinPartsElements[element.ref])) {
-          skinPartsElements[element.ref] = [skinPartsElements[element.ref]];
+    var skinRef = getSkinRef(element);
+    if (skinRef && skinParts[skinRef]) {
+      if (skinPartsElements.hasOwnProperty(skinRef)) {
+        if (!Array.isArray(skinPartsElements[skinRef])) {
+          skinPartsElements[skinRef] = [skinPartsElements[skinRef]];
         }
-        skinPartsElements[element.ref].push(element);
+        skinPartsElements[skinRef].push(element);
       } else {
-        skinPartsElements[element.ref] = element;
+        skinPartsElements[skinRef] = element;
       }
       
-      delete element.ref;
+      deleteSkinRef(element);
       if (component.partAdded) {
-        component.partAdded(element.ref, element);
+        component.partAdded(skinRef, element);
       }
     }
   });
 
-  if (process.env.NODE_ENV === "development") {
+  if (process.env.NODE_ENV !== "production") {
     var displayName = getDisplayName(component);
     
     Object.keys(skinParts).forEach(function (key) {
-      if (skinParts[key].required && !skinParts.hasOwnProperty(key)) {
-        var def = skinParts[key];
-        var errors = def(skinParts[key]);
-        if (errors.length) {
-          errors.forEach(function (error) {
-            switch(error.type) {
-                case ErrorType.REQUIRED:
-                  console.warn(`${displayName}.render(...): required skin part ${key} is missing`);
-                break;
-                case ErrorType.MULTIPLE:
-                  console.warn(
-                    `${displayName}.render(...): skin part ${key}` + 
-                    ` was provided multiple time but is not marked as array`
-                  );
-                break;
-                case ErrorType.WRONG_TYPE:
-                  console.warn(
-                    `${displayName}.render(...): expected type ${typeToString(error.expected)} ` + 
-                    ` for skin part ${key} got ${typeToString(error.actual)}`
-                  );
-                break;
-            }
-          });
-        }
+      var checkSkinpart = skinParts[key];
+      var errors = checkSkinpart(skinPartsElements[key]);
+      if (errors.length) {
+        errors.forEach(function (error) {
+          switch(error.type) {
+              case ErrorType.REQUIRED:
+                console.warn(`${displayName}.render(...): required skin part \`${key}\` is missing`);
+              break;
+              case ErrorType.MULTIPLE:
+                console.warn(
+                  `${displayName}.render(...): skin part \`${key}\` ` + 
+                  `was provided multiple time but is not marked as array`
+                );
+              break;
+              case ErrorType.WRONG_TYPE:
+                console.warn(
+                  `${displayName}.render(...): expected type \`${typeToString(error.expected)}\` ` + 
+                  `for skin part \`${key}\` got \`${typeToString(error.actual)}\``
+                );
+              break;
+          }
+        });
       }
     });
   }
@@ -95,28 +104,33 @@ var SkinnableComponentMixin = {
   render() {
     var skin = getSkin(this);
     var displayName = getDisplayName(this);
-    invariant(skin !== null, `${displayName}.render(..): could not find skin for component`);
-    invariant(typeof skin === 'function', `${displayName}.render(..): skin should be a function`);
-    return attachSkinPart(this, skin(this.state));
+    invariant(skin !== null, `${displayName}.render(...): could not resolve skin`);
+    invariant(typeof skin === 'function', `${displayName}.render(...): skin should be a function`);
+    return attachSkinPart(this, skin(this.getSkinState()));
   },
 
   addEventListener(element, event, handler) {
-    this.setPartProps(element, event, handler);
+    this.setPartProp(element, event, handler);
   },
 
   setPartProp(element, key, value) {
     var displayName = getDisplayName(this);
     invariant(
-      typeof element.props[key] !== 'undefined', 
+      typeof element.props[key] === 'undefined', 
       `${displayName}.setPartProp(...): trying to set props \`${key}\` which is already defined` 
     );
+    if (!element.props) {
+      element.props = {};
+    }
     element.props[key] = value;
+    if (element._store) {
+      element._store.props[key] = value;
+    }
   }
-
 };
 
 var SkinnableComponentPropTypes = {
-  skin: React.PropTypes.function
+  skin: React.PropTypes.func
 };
 
 var SkinnableComponentStatics = {
@@ -135,7 +149,7 @@ var SkinnableComponent = {
     );
    
     invariant(
-      spec.getSkinState && typeof spec.getSkinState === 'object',
+      spec.getSkinState && typeof spec.getSkinState === 'function',
       'SkinnableComponent.createClass(...): Class specification for skinnable components ' +
       'should implements a method `getSkinState`'
     );
